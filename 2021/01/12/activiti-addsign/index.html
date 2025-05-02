@@ -1,0 +1,615 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/headPortrait.jpg">
+  <link rel="icon" href="/img/headPortrait.jpg">
+  
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="author" content="IKA">
+  <meta name="keywords" content="">
+  
+    <meta name="description" content="在一个平常且忙碌的一天，突然接收到一个需求，你们的加签不符合我们想的情况，需要可以加签多人，并且还保留操作人的待办。虽说这个需求也挺合理，但开发时可就犯了难，activiti默认也没有加待办的功能啊。只能从底层的对象关系入手了。 思路把上面的需求转变下，无非就是要向待办中添加人去审批。根据activiti的方式来看，无非就是把task添加到instance而已。所以只要能将task添加到insta">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Activiti6 加签且保留待办">
+<meta property="og:url" content="https://tongyangyeyue.github.io/2021/01/12/activiti-addsign/index.html">
+<meta property="og:site_name" content="IKA">
+<meta property="og:description" content="在一个平常且忙碌的一天，突然接收到一个需求，你们的加签不符合我们想的情况，需要可以加签多人，并且还保留操作人的待办。虽说这个需求也挺合理，但开发时可就犯了难，activiti默认也没有加待办的功能啊。只能从底层的对象关系入手了。 思路把上面的需求转变下，无非就是要向待办中添加人去审批。根据activiti的方式来看，无非就是把task添加到instance而已。所以只要能将task添加到insta">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2021-01-12T04:25:02.000Z">
+<meta property="article:modified_time" content="2025-05-01T12:52:34.521Z">
+<meta property="article:author" content="IKA">
+<meta name="twitter:card" content="summary_large_image">
+  
+  
+  
+  <title>Activiti6 加签且保留待办 - IKA</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1749284_5i9bdhy70f8.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1736178_k526ubmyhba.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"tongyangyeyue.github.io","root":"/","version":"1.9.8","typing":{"enable":true,"typeSpeed":70,"cursorChar":"","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"right","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"follow_dnt":true,"baidu":null,"google":null,"tencent":{"sid":null,"cid":null},"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false},"umami":{"src":null,"website_id":null,"domains":null,"start_time":"2024-01-01T00:00:00.000Z","token":null,"api_server":null},"gtag":null,"tajs":null,"woyaola":null,"cnzz":null},"search_path":"/local-search.xml","include_content_in_search":true};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+
+  
+<meta name="generator" content="Hexo 7.3.0"></head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 70vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>IKA</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/" target="_self">
+                <i class="iconfont icon-home-fill"></i>
+                <span>首页</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/" target="_self">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>归档</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/cusImage/" target="_self">
+                <i class="iconfont icon-user-fill"></i>
+                <span>cusImage</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('/img/default.png') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="Activiti6 加签且保留待办"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2021-01-12 12:25" pubdate>
+          2021年1月12日 中午
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          <!-- compatible with older versions-->
+          997 字
+        
+      </span>
+    
+
+    
+
+    
+    
+  </div>
+
+
+        
+      </div>
+
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <h1 id="seo-header">Activiti6 加签且保留待办</h1>
+            
+            
+              <div class="markdown-body">
+                
+                <p>在一个平常且忙碌的一天，突然接收到一个需求，你们的加签不符合我们想的情况，需要可以加签多人，并且还保留操作人的待办。<br>虽说这个需求也挺合理，但开发时可就犯了难，activiti默认也没有加待办的功能啊。只能从底层的对象关系入手了。</p>
+<h2 id="思路"><a href="#思路" class="headerlink" title="思路"></a>思路</h2><p>把上面的需求转变下，无非就是要向待办中添加人去审批。根据activiti的方式来看，无非就是把task添加到instance而已。所以只要能将task添加到instance中，并且把所有参数都弄的和原始的待办相似 就差不多完成了。</p>
+<h2 id="实现API"><a href="#实现API" class="headerlink" title="实现API"></a>实现API</h2><p>先看到taskService里面好像有保存task的API。不过这个API看起来就太简陋了，一看就不能用。</p>
+<figure class="highlight abnf"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs abnf">Task task <span class="hljs-operator">=</span> taskService.newTask()<span class="hljs-comment">;</span><br>taskService.saveTask(task)<span class="hljs-comment">;</span><br></code></pre></td></tr></table></figure>
+
+<p>除此之外，常用的TaskService、RuntimeService就没有啥可以用的了，只能用上功能强大的ManagementService</p>
+<figure class="highlight sas"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><code class="hljs sas">ExecutionEntityManager.createChildExecutio<span class="hljs-meta">n</span>()<br>TaskEntityManager.<span class="hljs-keyword">create</span>()<br>TaskEntityManager.<span class="hljs-keyword">insert</span>()<br></code></pre></td></tr></table></figure>
+
+<h2 id="实现过程"><a href="#实现过程" class="headerlink" title="实现过程"></a>实现过程</h2><p>先把需要加签的那个人的task信息查出来，然后用传入到ManagementService里做处理</p>
+<figure class="highlight gradle"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><code class="hljs gradle"><span class="hljs-keyword">public</span> <span class="hljs-keyword">void</span> testAddone(String taskId)&#123;<br>    <span class="hljs-keyword">Task</span> <span class="hljs-keyword">task</span> = taskService.createTaskQuery()<br>                .taskId(taskId)<br>                .includeProcessVariables()<br>                .singleResult();<br>    String processInstanceId = <span class="hljs-keyword">task</span>.getProcessInstanceId();<br>    managementService.executeCommand(<span class="hljs-keyword">new</span> AddoneTestCmd(processInstanceId,<span class="hljs-keyword">task</span>));<br>    List&lt;<span class="hljs-keyword">Task</span>&gt; afterTask = taskService.createTaskQuery()<br>    .processInstanceId(processInstanceId)<br>                .includeProcessVariables()<br>                .list();<br>    System.out.<span class="hljs-keyword">println</span>(afterTask.<span class="hljs-keyword">size</span>());<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<p>先找到这个task所在的ExecutionEntity与TaskEntity</p>
+<figure class="highlight arduino"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><code class="hljs arduino"><span class="hljs-keyword">public</span> <span class="hljs-keyword">class</span> <span class="hljs-title class_">AddoneTestCmd</span> implements Command&lt;<span class="hljs-type">String</span>&gt; &#123;<br><br>    <span class="hljs-keyword">private</span> <span class="hljs-type">String</span> instanceId;<br><br>    <span class="hljs-keyword">private</span> <span class="hljs-built_in">Task</span> task;<br><br>    <span class="hljs-function"><span class="hljs-keyword">public</span> <span class="hljs-title">AddoneTestCmd</span><span class="hljs-params">(<span class="hljs-type">String</span> instanceId, <span class="hljs-built_in">Task</span> task)</span> </span>&#123;<br>        <span class="hljs-keyword">this</span>.instanceId = instanceId;<br>        <span class="hljs-keyword">this</span>.task = task;<br>    &#125;<br><br>    @<span class="hljs-function">Override</span><br><span class="hljs-function">    <span class="hljs-keyword">public</span> <span class="hljs-type">String</span> <span class="hljs-title">execute</span><span class="hljs-params">(CommandContext commandContext)</span> </span>&#123;<br>        ExecutionEntity executionEntity = commandContext.<span class="hljs-built_in">getExecutionEntityManager</span>()<br>                .<span class="hljs-built_in">findById</span>(task.<span class="hljs-built_in">getExecutionId</span>());<br>        TaskEntity taskEntity = commandContext.<span class="hljs-built_in">getTaskEntityManager</span>().<span class="hljs-built_in">findById</span>(task.<span class="hljs-built_in">getId</span>());<br>    &#125;<br>&#125;<br><br></code></pre></td></tr></table></figure>
+<p>然后要新建一个TaskEntity并将原来task的数据放进去最后放进去</p>
+<figure class="highlight jboss-cli"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><code class="hljs jboss-cli">@Override<br>public String execute<span class="hljs-params">(CommandContext commandContext)</span> &#123;<br>    ExecutionEntity executionEntity = <span class="hljs-keyword">command</span>Context.getExecutionEntityManager<span class="hljs-params">()</span><br>                <span class="hljs-string">.findById</span><span class="hljs-params">(task.getExecutionId()</span>);<br>    TaskEntity taskEntity = <span class="hljs-keyword">command</span>Context.getTaskEntityManager<span class="hljs-params">()</span><span class="hljs-string">.findById</span><span class="hljs-params">(task.getId()</span>);<br>    TaskEntity newTaskEntity = <span class="hljs-keyword">command</span>Context.getTaskEntityManager<span class="hljs-params">()</span><span class="hljs-string">.create</span><span class="hljs-params">()</span>;<br>    newTaskEntity.<span class="hljs-keyword">set</span>Variables<span class="hljs-params">(task.getProcessVariables()</span>);<br>    newTaskEntity.<span class="hljs-keyword">set</span>Assignee<span class="hljs-params">(&quot;admin&quot;)</span>;<br>    newTaskEntity.<span class="hljs-keyword">set</span>ProcessInstanceId<span class="hljs-params">(instanceId)</span>;<br>    newTaskEntity.<span class="hljs-keyword">set</span>Category<span class="hljs-params">(task.getCategory()</span>);<br>    newTaskEntity.<span class="hljs-keyword">set</span>Description<span class="hljs-params">(task.getDescription()</span>);<br>    newTaskEntity.<span class="hljs-keyword">set</span>Name<span class="hljs-params">(taskEntity.getName()</span>);<br>    newTaskEntity.<span class="hljs-keyword">set</span>TaskDefinitionKey<span class="hljs-params">(taskEntity.getTaskDefinitionKey()</span>);<br>    newTaskEntity.<span class="hljs-keyword">set</span>Execution<span class="hljs-params">(executionEntity)</span>;<br>    newTaskEntity.<span class="hljs-keyword">set</span>ExecutionId<span class="hljs-params">(task.getExecutionId()</span>);<br>    <span class="hljs-keyword">command</span>Context.getTaskEntityManager<span class="hljs-params">()</span><span class="hljs-string">.insert</span><span class="hljs-params">(newTaskEntity, executionEntity)</span>;<br>&#125;<br><br></code></pre></td></tr></table></figure>
+<p>这看起来不错，task也加进去了，再次查看时候参数也都差不多在。<br>正当高兴的时候，我点击了下同意，芜湖，果不其然报错了。</p>
+<figure class="highlight mipsasm"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs mipsasm"><span class="hljs-keyword">org.activiti.engine.ActivitiException: </span>UserTask <span class="hljs-keyword">should </span>not <span class="hljs-keyword">be </span>signalled <span class="hljs-keyword">before </span>complete<br></code></pre></td></tr></table></figure>
+<p>在找到底层的代码后，发现是complete的时候需要遍历这个流程的task，看里面的各种标志位是否都正确。<br>仔细看了一圈之后，也不知道咋改，只能再想想哪里出错了。<br>后来发现流程里面有3个变量nrOfInstances、nrOfActiveInstances、nrOfCompletedInstances  分别代表这条实例的任务总数、未完成任务数、已完成任务数。<br>把task添加进去的时候 这些变量不会自动加，那就手动修改下。</p>
+<figure class="highlight erlang"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><code class="hljs erlang">Integer <span class="hljs-keyword">begin</span>NrofInstance = (Integer) executionEntity.getVariable(<span class="hljs-string">&quot;nrOfInstances&quot;</span>);<br>Integer <span class="hljs-keyword">begin</span>NrOfActiveInstances = (Integer) executionEntity.getVariable(<span class="hljs-string">&quot;nrOfActiveInstances&quot;</span>);<br>executionEntity.setVariable(<span class="hljs-string">&quot;nrOfInstances&quot;</span>, <span class="hljs-keyword">begin</span>NrofInstance + <span class="hljs-number">1</span>);<br>executionEntity.setVariable(<span class="hljs-string">&quot;nrOfActiveInstances&quot;</span>, <span class="hljs-keyword">begin</span>NrOfActiveInstances + <span class="hljs-number">1</span>);<br></code></pre></td></tr></table></figure>
+<p>然而，还是不行，依旧是上面的错误。看起来并不是这个变量的问题，不过这个变量修改确实是需要的。<br>这时，突然发现其实一个instance里面 每个task的executionId都是不同的，而我按上面的操作后，新生成的executionId和原来传入的task相同了。于是我就明白了，应该新生成一个ExecutionEntity才对。</p>
+<figure class="highlight jboss-cli"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><code class="hljs jboss-cli">ExecutionEntity parentExecutionEntry = executionEntity.getParent<span class="hljs-params">()</span>;<br>ExecutionEntity newChildExecution = <span class="hljs-keyword">command</span>Context.getExecutionEntityManager<span class="hljs-params">()</span><span class="hljs-string">.createChildExecution</span><span class="hljs-params">(parentExecutionEntry)</span>;<br><span class="hljs-keyword">command</span>Context.getTaskEntityManager<span class="hljs-params">()</span><span class="hljs-string">.insert</span><span class="hljs-params">(newTaskEntity, newChildExecution)</span>;<br></code></pre></td></tr></table></figure>
+<p>好家伙，这一通操作下来看起来应该是可以了。在页面点了一下同意，咔 又报错了，不过这次错误变了，说明有戏</p>
+<figure class="highlight pgsql"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs pgsql">org.activiti.engine.ActivitiException: Programmatic error: <span class="hljs-keyword">no</span> <span class="hljs-keyword">current</span> flow element <span class="hljs-built_in">found</span> <span class="hljs-keyword">or</span> invalid <span class="hljs-keyword">type</span>: <span class="hljs-keyword">null</span>. Halting.<br></code></pre></td></tr></table></figure>
+<p>看起来像没有CurrentFlowElement，那好 就添加一个CurrentFlowElement。</p>
+<figure class="highlight abnf"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs abnf">newChildExecution.setCurrentFlowElement(executionEntity.getCurrentFlowElement())<span class="hljs-comment">;</span><br></code></pre></td></tr></table></figure>
+<p>最终，基础的功能实现了。</p>
+<h2 id="整体代码"><a href="#整体代码" class="headerlink" title="整体代码"></a>整体代码</h2><figure class="highlight arduino"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><code class="hljs arduino"><span class="hljs-function"><span class="hljs-keyword">public</span> <span class="hljs-type">void</span> <span class="hljs-title">testAddone</span><span class="hljs-params">(<span class="hljs-type">String</span> taskId)</span></span>&#123;<br>    <span class="hljs-built_in">Task</span> task = taskService.<span class="hljs-built_in">createTaskQuery</span>()<br>                .<span class="hljs-built_in">taskId</span>(taskId)<br>                .<span class="hljs-built_in">includeProcessVariables</span>()<br>                .<span class="hljs-built_in">singleResult</span>();<br>    <span class="hljs-type">String</span> processInstanceId = task.<span class="hljs-built_in">getProcessInstanceId</span>();<br>    managementService.<span class="hljs-built_in">executeCommand</span>(<span class="hljs-keyword">new</span> <span class="hljs-built_in">AddoneTestCmd</span>(processInstanceId,task));<br>    List&lt;<span class="hljs-built_in">Task</span>&gt; afterTask = taskService.<span class="hljs-built_in">createTaskQuery</span>()<br>    .<span class="hljs-built_in">processInstanceId</span>(processInstanceId)<br>                .<span class="hljs-built_in">includeProcessVariables</span>()<br>                .<span class="hljs-built_in">list</span>();<br></code></pre></td></tr></table></figure>
+
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br></pre></td><td class="code"><pre><code class="hljs java"><span class="hljs-keyword">public</span> <span class="hljs-keyword">class</span> <span class="hljs-title class_">AddoneTestCmd</span> <span class="hljs-keyword">implements</span> <span class="hljs-title class_">Command</span>&lt;String&gt; &#123;<br><br>    <span class="hljs-keyword">private</span> String instanceId;<br><br>    <span class="hljs-keyword">private</span> Task task;<br><br>    <span class="hljs-keyword">public</span> <span class="hljs-title function_">AddoneTestCmd</span><span class="hljs-params">(String instanceId, Task task)</span> &#123;<br>        <span class="hljs-built_in">this</span>.instanceId = instanceId;<br>        <span class="hljs-built_in">this</span>.task = task;<br>    &#125;<br><br>    <span class="hljs-meta">@Override</span><br>    <span class="hljs-keyword">public</span> String <span class="hljs-title function_">execute</span><span class="hljs-params">(CommandContext commandContext)</span> &#123;<br>        <span class="hljs-type">ExecutionEntity</span> <span class="hljs-variable">executionEntity</span> <span class="hljs-operator">=</span> commandContext.getExecutionEntityManager()<br>                .findById(task.getExecutionId());<br>        <span class="hljs-type">ExecutionEntity</span> <span class="hljs-variable">parentExecutionEntry</span> <span class="hljs-operator">=</span> executionEntity.getParent();<br>        <span class="hljs-type">ExecutionEntity</span> <span class="hljs-variable">newChildExecution</span> <span class="hljs-operator">=</span> commandContext.getExecutionEntityManager().createChildExecution(parentExecutionEntry);<br>        <span class="hljs-type">Integer</span> <span class="hljs-variable">beginNrofInstance</span> <span class="hljs-operator">=</span> (Integer) newChildExecution.getVariable(<span class="hljs-string">&quot;nrOfInstances&quot;</span>);<br>        <span class="hljs-type">Integer</span> <span class="hljs-variable">beginNrOfActiveInstances</span> <span class="hljs-operator">=</span> (Integer) newChildExecution.getVariable(<span class="hljs-string">&quot;nrOfActiveInstances&quot;</span>);<br>        newChildExecution.setCurrentFlowElement(executionEntity.getCurrentFlowElement());<br>        <span class="hljs-type">TaskEntity</span> <span class="hljs-variable">taskEntity</span> <span class="hljs-operator">=</span> commandContext.getTaskEntityManager().findById(task.getId());<br>        <span class="hljs-type">TaskEntity</span> <span class="hljs-variable">newTaskEntity</span> <span class="hljs-operator">=</span> commandContext.getTaskEntityManager().create();<br>        newTaskEntity.setVariables(task.getProcessVariables());<br>        newTaskEntity.setAssignee(<span class="hljs-string">&quot;admin&quot;</span>);<br>        newTaskEntity.setProcessInstanceId(instanceId);<br>        newTaskEntity.setCategory(task.getCategory());<br>        newTaskEntity.setDescription(task.getDescription());<br>        newTaskEntity.setName(taskEntity.getName());<br>        newTaskEntity.setTaskDefinitionKey(taskEntity.getTaskDefinitionKey());<br><br>        commandContext.getTaskEntityManager().insert(newTaskEntity, newChildExecution);<br>        newChildExecution.setVariable(<span class="hljs-string">&quot;nrOfInstances&quot;</span>, beginNrofInstance + <span class="hljs-number">1</span>);<br>        newChildExecution.setVariable(<span class="hljs-string">&quot;nrOfActiveInstances&quot;</span>, beginNrOfActiveInstances + <span class="hljs-number">1</span>);<br>        <span class="hljs-keyword">return</span> <span class="hljs-literal">null</span>;<br>    &#125;<br>&#125;<br></code></pre></td></tr></table></figure>
+
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>Activiti6 加签且保留待办</div>
+      <div>https://tongyangyeyue.github.io/2021/01/12/activiti-addsign/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>作者</div>
+          <div>IKA</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>发布于</div>
+          <div>2021年1月12日</div>
+        </div>
+      
+      
+      
+        <div class="license-meta-item">
+          <div>许可协议</div>
+          <div>
+            
+              
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - 署名">
+                    <i class="iconfont icon-cc-by"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                      <a href="/2021/01/15/mysql-date-format/" title="mysql的DateFormat函数">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">mysql的DateFormat函数</span>
+                        <span class="visible-mobile">上一篇</span>
+                      </a>
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/2020/08/09/hello-world/" title="Java8之HashMap">
+                        <span class="hidden-mobile">Java8之HashMap</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>目录</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+       <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+    </div>
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.4/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="https://lib.baomitu.com/typed.js/2.0.12/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.20.1/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/5.0.0/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  <script  src="/js/local-search.js" ></script>
+
+
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
+  </noscript>
+</body>
+</html>
