@@ -19,17 +19,20 @@
   <meta name="author" content="IKA">
   <meta name="keywords" content="">
   
-    <meta name="description" content="Nvidia Container Toolkitnvidia-container-toolkit包含如下3个组件  nvidia-container-runtime nvidia-container-runtime-hook libnvidia-container  整体流程左侧是不带nvidia的容器启动流程，  右侧是带nvidia的容器启动流程   我画的流程和官方给出的不一样:在仔细查阅d">
+    <meta name="description" content="Nvidia Container Toolkitnvidia-container-toolkit包含如下3个组件  nvidia-container-runtime nvidia-container-runtime-hook libnvidia-container  整体流程左侧是不带nvidia的容器启动流程，  右侧是带nvidia的容器启动流程  图1  图2我画的流程和官方给出的不一样:在">
 <meta property="og:type" content="article">
 <meta property="og:title" content="nvidia-container-toolkit">
 <meta property="og:url" content="https://tongyangyeyue.github.io/ika-new-blog/2025/06/23/nvidia-container-toolkit/index.html">
 <meta property="og:site_name" content="IKA">
-<meta property="og:description" content="Nvidia Container Toolkitnvidia-container-toolkit包含如下3个组件  nvidia-container-runtime nvidia-container-runtime-hook libnvidia-container  整体流程左侧是不带nvidia的容器启动流程，  右侧是带nvidia的容器启动流程   我画的流程和官方给出的不一样:在仔细查阅d">
+<meta property="og:description" content="Nvidia Container Toolkitnvidia-container-toolkit包含如下3个组件  nvidia-container-runtime nvidia-container-runtime-hook libnvidia-container  整体流程左侧是不带nvidia的容器启动流程，  右侧是带nvidia的容器启动流程  图1  图2我画的流程和官方给出的不一样:在">
 <meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://tongyangyeyue.github.io/ika-new-blog/2025/06/23/nvidia-container-toolkit/container1.png">
+<meta property="og:image" content="https://tongyangyeyue.github.io/ika-new-blog/2025/06/23/nvidia-container-toolkit/container2.png">
 <meta property="article:published_time" content="2025-06-23T05:58:30.000Z">
-<meta property="article:modified_time" content="2025-06-23T06:20:02.978Z">
+<meta property="article:modified_time" content="2025-06-23T06:22:33.334Z">
 <meta property="article:author" content="IKA">
 <meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://tongyangyeyue.github.io/ika-new-blog/2025/06/23/nvidia-container-toolkit/container1.png">
   
   
   
@@ -199,7 +202,7 @@
         <i class="iconfont icon-chart"></i>
         
           <!-- compatible with older versions-->
-          5.6k 字
+          5.7k 字
         
       </span>
     
@@ -250,9 +253,10 @@
 <li>libnvidia-container</li>
 </ul>
 <h3 id="整体流程"><a href="#整体流程" class="headerlink" title="整体流程"></a>整体流程</h3><p>左侧是不带nvidia的容器启动流程，  右侧是带nvidia的容器启动流程</p>
-
-
-<p>我画的流程和官方给出的不一样:<br>在仔细查阅docker文档后，发现docker配置的runtime 只会在containerd调用，而不是由docker来调用<br><a target="_blank" rel="noopener" href="https://docs.docker.com/engine/daemon/alternative-runtimes/#use-containerd-shims">https://docs.docker.com/engine/daemon/alternative-runtimes/#use-containerd-shims</a></p>
+<img src="/ika-new-blog/2025/06/23/nvidia-container-toolkit/container1.png" srcset="/ika-new-blog/img/loading.gif" lazyload class="" title="img">
+<p>图1</p>
+<img src="/ika-new-blog/2025/06/23/nvidia-container-toolkit/container2.png" srcset="/ika-new-blog/img/loading.gif" lazyload class="" title="img">
+<p>图2<br>我画的流程和官方给出的不一样:<br>在仔细查阅docker文档后，发现docker配置的runtime 只会在containerd调用，而不是由docker来调用<br><a target="_blank" rel="noopener" href="https://docs.docker.com/engine/daemon/alternative-runtimes/#use-containerd-shims">https://docs.docker.com/engine/daemon/alternative-runtimes/#use-containerd-shims</a></p>
 <p>流程步骤：</p>
 <ul>
 <li>安装container-toolkit后，使用nvidia-ctk更改容器配置，设置docker&#x2F;containerd 的配置，修改其runtime为nvidia-container-runtime  （此步骤在安装时执行，后续步骤为启动容器时执行）</li>
